@@ -1,471 +1,331 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!doctype html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>2026世界杯预测追踪</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standing By</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
 <style>
   :root {
-    --green: #1f9d55; --green-bg: #eafaf0;
-    --red: #d64545; --red-bg: #fdecec;
-    --blue: #1d6fd6; --blue-bg: #eaf2fd;
-    --gray-bg: #f6f7f9; --border: #e2e5ea; --text: #1f2430; --muted: #7a8195;
+    --bg: #EEF1F3;
+    --surface: #FFFFFF;
+    --ink: #151A21;
+    --muted: #5C6672;
+    --faint: #8A93A0;
+    --border: #DBE1E6;
+    --accent: #C97A1E;
+    --accent-ink: #201200;
+    --accent-soft: #C97A1E22;
+    --danger: #B8453C;
+    --shadow: rgba(20, 26, 33, 0.08);
   }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0A0E13;
+      --surface: #11161D;
+      --ink: #E7ECF1;
+      --muted: #8B96A3;
+      --faint: #566270;
+      --border: #202832;
+      --accent: #E8A33D;
+      --accent-ink: #1A1200;
+      --accent-soft: #E8A33D26;
+      --danger: #E08278;
+      --shadow: rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0A0E13;
+    --surface: #11161D;
+    --ink: #E7ECF1;
+    --muted: #8B96A3;
+    --faint: #566270;
+    --border: #202832;
+    --accent: #E8A33D;
+    --accent-ink: #1A1200;
+    --accent-soft: #E8A33D26;
+    --danger: #E08278;
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+
   * { box-sizing: border-box; }
+
+  html, body { height: 100%; margin: 0; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    background: #fff; color: var(--text); margin: 0; padding: 24px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 20px;
+    padding-block: 48px;
   }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
-  .stats { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-  .stat-card {
-    background: var(--gray-bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 16px; min-width: 130px;
-  }
-  .stat-card .num { font-size: 20px; font-weight: 700; }
-  .stat-card .label { font-size: 12px; color: var(--muted); }
-  .controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .controls button {
-    border: 1px solid var(--border); background: #fff; border-radius: 8px;
-    padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text);
-  }
-  .controls button.active { background: var(--text); color: #fff; border-color: var(--text); }
-  .round-group { margin-bottom: 22px; }
-  .round-title {
-    font-size: 14px; font-weight: 700; margin: 18px 0 8px; padding-bottom: 4px;
-    border-bottom: 2px solid var(--text);
-  }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    text-align: left; padding: 6px 8px; color: var(--muted); font-weight: 600;
-    font-size: 11px; text-transform: uppercase; letter-spacing: .03em;
-    border-bottom: 1px solid var(--border);
-  }
-  td { padding: 8px; vertical-align: middle; }
-  tr.match-row { border-bottom: 1px solid var(--border); }
-  tr.match-row:hover { background: #fafbfc; }
-  .teams { font-weight: 600; white-space: nowrap; }
-  .box {
-    display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700;
-    border: 1.5px solid transparent;
-  }
-  .box.correct { background: var(--green-bg); color: var(--green); border-color: var(--green); }
-  .box.wrong { background: var(--red-bg); color: var(--red); border-color: var(--red); }
-  .box.pending { background: var(--gray-bg); color: var(--muted); border-color: var(--border); }
-  .box.actual { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
-  .pct { color: var(--muted); font-size: 11px; margin-left: 3px; }
-  .probs { font-size: 11px; color: var(--muted); white-space: nowrap; }
-  .score-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-  .chip {
-    display: inline-flex; align-items: baseline; gap: 3px; padding: 2px 7px; border-radius: 6px;
-    font-weight: 700; font-size: 12px; border: 1.5px solid var(--border); background: var(--gray-bg); color: var(--text);
-  }
-  .chip.hit { background: var(--green-bg); color: var(--green); border-color: var(--green); }
-  .pending-badge {
-    display: inline-block; background: #fff4e0; color: #a56a00; border: 1px solid #f0cf8f;
-    border-radius: 6px; padding: 1px 8px; font-size: 11px; font-weight: 600;
-  }
-  .market-row { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .market-row .edge-pos { color: var(--green); font-weight: 700; }
-  .market-row .edge-neg { color: var(--red); font-weight: 700; }
-  .champion-panel {
-    background: var(--gray-bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; margin-bottom: 20px;
-  }
-  .champion-panel h2 { font-size: 15px; margin: 0 0 10px; }
-  .champion-cols { display: flex; gap: 28px; flex-wrap: wrap; }
-  .champion-col { min-width: 220px; }
-  .champion-col .col-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-  .champion-list { list-style: none; margin: 0; padding: 0; }
-  .champion-list li {
-    display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;
-    border-bottom: 1px solid var(--border);
-  }
-  .champion-list li:last-child { border-bottom: none; }
-  .champion-list .team-name { font-weight: 600; }
-  .champion-list .team-val { color: var(--blue); font-weight: 700; }
 
-  .future-panel {
-    background: var(--gray-bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; margin-bottom: 20px;
+  .stage {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
   }
-  .future-panel h2 { font-size: 15px; margin: 0 0 4px; }
-  .future-panel .future-note { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
-  .future-cols { display: flex; gap: 28px; flex-wrap: wrap; }
-  .future-col { min-width: 280px; flex: 1; }
-  .future-col .col-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-  table.future-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  table.future-table th {
-    text-align: left; padding: 5px 6px; color: var(--muted); font-weight: 600; font-size: 11px;
-    text-transform: uppercase; border-bottom: 1px solid var(--border);
-  }
-  table.future-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); }
-  table.future-table .winner { font-weight: 700; color: var(--blue); }
 
-  .sim-panel {
-    background: var(--gray-bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; margin-bottom: 20px;
+  .mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .sim-panel h2 { font-size: 15px; margin: 0 0 4px; }
-  .sim-note { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
-  .sim-controls { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 14px; }
-  .sim-controls label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
-  .sim-controls input {
-    border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; width: 130px;
-  }
-  .sim-controls button {
-    border: 1px solid var(--text); background: var(--text); color: #fff; border-radius: 8px;
-    padding: 7px 16px; font-size: 13px; cursor: pointer;
-  }
-  .sim-summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-  .sim-summary .stat-card .num.profit-pos { color: var(--green); }
-  .sim-summary .stat-card .num.profit-neg { color: var(--red); }
-  .sim-table-wrap { max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
-  table.sim-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  table.sim-table th {
-    position: sticky; top: 0; background: #fff; text-align: left; padding: 6px 8px; color: var(--muted);
-    font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border);
-  }
-  table.sim-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  .sim-stake-input {
-    width: 68px; border: 1px solid var(--border); border-radius: 5px; padding: 3px 6px; font-size: 12px;
-  }
-  .odds-tag { font-size: 10px; color: var(--muted); margin-left: 3px; }
-  .pl-pos { color: var(--green); font-weight: 700; }
-  .pl-neg { color: var(--red); font-weight: 700; }
 
-  .hero {
-    position: relative; overflow: hidden; border-radius: 14px; margin-bottom: 22px;
-    padding: 22px 24px; color: #fff;
-    background: linear-gradient(120deg, #aa151b 0%, #aa151b 46%, #f1bf00 50%, #6cabdd 54%, #6cabdd 100%);
+  .mark-glyph {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    flex: none;
   }
-  .hero-trophy { font-size: 30px; margin-right: 8px; vertical-align: -4px; }
-  .hero-title { font-size: 20px; font-weight: 800; margin: 0 0 6px; text-shadow: 0 1px 4px rgba(0,0,0,.35); }
-  .hero-sub { font-size: 13px; opacity: .95; text-shadow: 0 1px 3px rgba(0,0,0,.3); line-height: 1.6; }
-  .hero-sides { display: flex; justify-content: space-between; margin-top: 12px; font-size: 12.5px; font-weight: 600; }
-  .hero-side { text-shadow: 0 1px 3px rgba(0,0,0,.35); }
-  .hero-vs { opacity: .9; font-weight: 800; }
-  .hero-stars { position: absolute; inset: 0; pointer-events: none; }
-  .hero-star {
-    position: absolute; font-size: 14px; color: #fff; opacity: 0;
-    animation: twinkle 2.6s ease-in-out infinite;
-    text-shadow: 0 0 6px rgba(255,255,255,.8);
+
+  .mark-name {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
   }
-  @keyframes twinkle {
-    0%, 100% { opacity: 0; transform: scale(.6); }
-    50% { opacity: .95; transform: scale(1.15); }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px var(--shadow), 0 12px 32px -20px var(--shadow);
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    animation: pulse 2.2s ease-in-out infinite;
+    flex: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status-dot { animation: none; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: clamp(28px, 6vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 40ch;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    border: none;
+    margin: 0;
+  }
+
+  .access-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .field-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="password"] {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 13px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: 0.03em;
+  }
+
+  input[type="password"]::placeholder {
+    color: var(--faint);
+    letter-spacing: 0.02em;
+    font-family: "IBM Plex Sans", sans-serif;
+  }
+
+  input[type="password"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  button {
+    flex: none;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 11px 18px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  button:hover { opacity: 0.85; }
+
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .field-row.shake input {
+    animation: shake 0.32s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field-row.shake input { animation: none; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .feedback {
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 18px;
+    line-height: 1.5;
+  }
+
+  .feedback.is-visible { color: var(--danger); }
+
+  footer {
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--faint);
   }
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="hero-stars">
-    <span class="hero-star" style="left:6%; top:18%; animation-delay:0s;">★</span>
-    <span class="hero-star" style="left:16%; top:60%; animation-delay:.4s;">★</span>
-    <span class="hero-star" style="left:27%; top:30%; animation-delay:.9s;">★</span>
-    <span class="hero-star" style="left:38%; top:70%; animation-delay:1.3s;">★</span>
-    <span class="hero-star" style="left:50%; top:22%; animation-delay:.2s;">★</span>
-    <span class="hero-star" style="left:61%; top:64%; animation-delay:1.6s;">★</span>
-    <span class="hero-star" style="left:72%; top:28%; animation-delay:.7s;">★</span>
-    <span class="hero-star" style="left:83%; top:58%; animation-delay:1.1s;">★</span>
-    <span class="hero-star" style="left:92%; top:20%; animation-delay:2.0s;">★</span>
+<div class="stage">
+  <div class="mark">
+    <div class="mark-glyph">kb</div>
+    <span class="mark-name">kevinbai.dev</span>
   </div>
-  <div class="hero-title"><span class="hero-trophy">🏆</span>2026世界杯预测追踪 · 决赛周</div>
-  <div class="hero-sub">
-    大力神杯的最后争夺:决赛西班牙(亚马尔)vs 阿根廷(梅西);季军赛法国(姆巴佩)vs 英格兰(哈里·凯恩)。
-    模型逐场预测见下方。
+
+  <div class="panel">
+    <div class="status-row">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>Status &mdash; updating</span>
+    </div>
+
+    <div>
+      <h1>Site&rsquo;s being rebuilt.</h1>
+      <p class="lede">Making changes behind the scenes right now. Everything will be back shortly &mdash; check back soon.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <p class="access-label" id="access-label">Have access?</p>
+      <form id="gate-form" aria-labelledby="access-label">
+        <div class="field-row" id="field-row">
+          <input type="password" id="pw" name="password" placeholder="Enter password" autocomplete="current-password" aria-describedby="pw-feedback">
+          <button type="submit">Enter</button>
+        </div>
+        <p class="feedback" id="pw-feedback" role="status"></p>
+      </form>
+    </div>
   </div>
-  <div class="hero-sides">
-    <span class="hero-side">🇪🇸 西班牙 · 亚马尔</span>
-    <span class="hero-vs">VS</span>
-    <span class="hero-side">🇦🇷 阿根廷 · 梅西</span>
-  </div>
+
+  <footer>&copy; <span id="year"></span> &mdash; back online soon</footer>
 </div>
-
-<div class="champion-panel">
-  <h2>当前形势(仅剩两队进决赛, 头对头精确计算)</h2>
-  <div class="champion-cols">
-    <div class="champion-col">
-      <div class="col-label">夺冠概率(决赛: 西班牙 vs 阿根廷)</div>
-      <ul class="champion-list" id="championTop5"></ul>
-    </div>
-    <div class="champion-col">
-      <div class="col-label">当前战力值 TOP 4</div>
-      <ul class="champion-list" id="eloTop5"></ul>
-    </div>
-  </div>
-</div>
-
-<div class="future-panel">
-  <h2>潜在决赛 / 季军赛对阵预测</h2>
-  <div class="future-note">
-    半决赛(法国vs西班牙、阿根廷vs英格兰)还没开踢, 决赛和季军赛的对阵取决于两场半决赛结果,
-    所以下面把4种可能组合都现算了一遍(用跟半决赛完全一样的模型和流程), 主客场按对阵表列出的
-    顺序指定(淘汰赛后段大概率中立球场, 顺序本身不代表真实主客场)。
-  </div>
-  <div class="future-cols">
-    <div class="future-col">
-      <div class="col-label">🏆 决赛: 西班牙(亚马尔/梅西队友) vs 阿根廷(梅西)</div>
-      <table class="future-table">
-        <thead><tr><th>对阵</th><th>主/平/客</th><th>推荐比分</th><th>推荐冠军</th></tr></thead>
-        <tbody><tr><td>Spain vs Argentina</td><td>51.5% / 30.6% / 17.8%</td><td>1-1(常规时间)</td><td class="winner">Spain</td></tr></tbody>
-      </table>
-    </div>
-    
-    <div class="future-col">
-      <div class="col-label">季军赛: 法国(姆巴佩) vs 英格兰(凯恩)</div>
-      <table class="future-table">
-        <thead><tr><th>对阵</th><th>主/平/客</th><th>推荐比分</th><th>推荐季军</th></tr></thead>
-        <tbody><tr><td>France vs England</td><td>51.7% / 30.0% / 18.3%</td><td>1-1(常规时间)</td><td class="winner">France</td></tr></tbody>
-      </table>
-    </div>
-    </div>
-</div>
-
-<div class="sim-panel" style="display:none;">
-  <h2>投注模拟器(跟着模型预测下注,虚拟本金)</h2>
-  <div class="sim-note">
-    只是模拟推演, 不是真钱、不构成任何投注建议。赔率全部来自真实市场, 不是模型自己估的:
-    已完赛的94场用Polymarket(去中心化预测市场)当时的赛前收盘价反推赔率; 待开赛的5场优先用
-    Polymarket实时报价, 西班牙vs比利时这场Polymarket还没开市场, 用The Odds API(24家欧洲
-    博彩公司平均)兜底。<b>小组赛</b>押90分钟胜/平/负三选一; <b>淘汰赛</b>(32强及以后)改押
-    "谁晋级"(加时+点球最终谁赢下这一轮), 不再有平局选项——把主胜平客胜里"平局"那部分市场
-    份额按比例分给两队、重新归一化成二选一市场, 标"(晋级)"以区分。极少数赔率数据缺失的
-    场次会跳过、不计入统计。策略固定为"每场都买模型认为更可能的那一方"。
-  </div>
-  <div class="sim-controls">
-    <div><label>初始本金</label><input type="number" id="simBankroll" value="1000" step="100"></div>
-    <div><label>默认单场下注额</label><input type="number" id="simDefaultStake" value="10" step="1"></div>
-    <button id="simApplyAll">应用到全部场次</button>
-    <button id="simReset">重置</button>
-  </div>
-  <div class="sim-summary" id="simSummary"></div>
-  <div class="sim-table-wrap">
-    <table class="sim-table">
-      <thead><tr>
-        <th>对阵</th><th>推荐买</th><th>赔率</th><th>下注额</th><th>结果</th><th>本场盈亏</th><th>下注后余额</th>
-      </tr></thead>
-      <tbody id="simTableBody"></tbody>
-    </table>
-  </div>
-</div>
-
-<div class="stats" id="stats"></div>
-
-<div class="controls" id="controls"></div>
-
-<div id="content"></div>
 
 <script>
-const DATA = [{"round": "Group A", "home": "Mexico", "away": "South Africa", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "13.6"}, {"score": "0-0", "pct": "12.0"}, {"score": "2-0", "pct": "11.9"}], "pred_result": "home_win", "pred_home_pct": "55.2", "pred_draw_pct": "34.4", "pred_away_pct": "10.4", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.44, "sim_odds_source": "polymarket"}, {"round": "Group A", "home": "South Korea", "away": "Czech Republic", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "14.7"}, {"score": "0-0", "pct": "13.0"}, {"score": "2-0", "pct": "10.9"}], "pred_result": "home_win", "pred_home_pct": "50.5", "pred_draw_pct": "37.2", "pred_away_pct": "12.3", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.67, "sim_odds_source": "polymarket"}, {"round": "Group A", "home": "Czech Republic", "away": "South Africa", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.8"}, {"score": "0-0", "pct": "15.7"}, {"score": "0-1", "pct": "7.5"}], "pred_result": "draw", "pred_home_pct": "28.1", "pred_draw_pct": "45.1", "pred_away_pct": "26.8", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.77, "sim_odds_source": "polymarket"}, {"round": "Group A", "home": "Mexico", "away": "South Korea", "actual_score": "1-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "14.3"}, {"score": "1-0", "pct": "12.8"}, {"score": "1-1", "pct": "10.8"}], "pred_result": "home_win", "pred_home_pct": "65.6", "pred_draw_pct": "27.4", "pred_away_pct": "7.0", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.11, "sim_odds_source": "polymarket"}, {"round": "Group A", "home": "Czech Republic", "away": "Mexico", "actual_score": "0-3", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "14.5"}, {"score": "0-0", "pct": "12.8"}, {"score": "0-2", "pct": "10.0"}], "pred_result": "away_win", "pred_home_pct": "12.0", "pred_draw_pct": "36.7", "pred_away_pct": "51.3", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.83, "sim_odds_source": "polymarket"}, {"round": "Group A", "home": "South Africa", "away": "South Korea", "actual_score": "1-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "17.7"}, {"score": "0-0", "pct": "15.6"}, {"score": "0-1", "pct": "9.2"}], "pred_result": "draw", "pred_home_pct": "23.8", "pred_draw_pct": "44.8", "pred_away_pct": "31.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.92, "sim_odds_source": "polymarket"}, {"round": "Group B", "home": "Canada", "away": "Bosnia and Herzegovina", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "13.7"}, {"score": "0-0", "pct": "12.1"}, {"score": "2-0", "pct": "10.5"}], "pred_result": "home_win", "pred_home_pct": "54.7", "pred_draw_pct": "34.7", "pred_away_pct": "10.6", "pending": false, "result_correct": false, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.87, "sim_odds_source": "polymarket"}, {"round": "Group B", "home": "Qatar", "away": "Switzerland", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "0-2", "pct": "14.8"}, {"score": "0-3", "pct": "11.9"}, {"score": "1-2", "pct": "11.3"}], "pred_result": "away_win", "pred_home_pct": "2.3", "pred_draw_pct": "11.8", "pred_away_pct": "86.0", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.21, "sim_odds_source": "polymarket"}, {"round": "Group B", "home": "Switzerland", "away": "Bosnia and Herzegovina", "actual_score": "4-1", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "18.2"}, {"score": "3-0", "pct": "14.7"}, {"score": "1-0", "pct": "12.2"}], "pred_result": "home_win", "pred_home_pct": "98.9", "pred_draw_pct": "0.9", "pred_away_pct": "0.2", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.6, "sim_odds_source": "polymarket"}, {"round": "Group B", "home": "Canada", "away": "Qatar", "actual_score": "6-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "14.3"}, {"score": "2-1", "pct": "11.7"}, {"score": "3-0", "pct": "11.1"}], "pred_result": "home_win", "pred_home_pct": "83.1", "pred_draw_pct": "14.1", "pred_away_pct": "2.8", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.32, "sim_odds_source": "polymarket"}, {"round": "Group B", "home": "Switzerland", "away": "Canada", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "14.3"}, {"score": "0-0", "pct": "12.6"}, {"score": "2-0", "pct": "10.2"}], "pred_result": "home_win", "pred_home_pct": "52.3", "pred_draw_pct": "36.1", "pred_away_pct": "11.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.6, "sim_odds_source": "polymarket"}, {"round": "Group B", "home": "Bosnia and Herzegovina", "away": "Qatar", "actual_score": "3-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "17.7"}, {"score": "0-0", "pct": "15.6"}, {"score": "2-2", "pct": "7.3"}], "pred_result": "draw", "pred_home_pct": "31.8", "pred_draw_pct": "44.7", "pred_away_pct": "23.5", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 6.06, "sim_odds_source": "polymarket"}, {"round": "Group C", "home": "Brazil", "away": "Morocco", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.5"}, {"score": "0-0", "pct": "15.4"}, {"score": "2-1", "pct": "8.0"}], "pred_result": "draw", "pred_home_pct": "34.4", "pred_draw_pct": "44.2", "pred_away_pct": "21.5", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.92, "sim_odds_source": "polymarket"}, {"round": "Group C", "home": "Haiti", "away": "Scotland", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "15.3"}, {"score": "0-0", "pct": "13.5"}, {"score": "0-1", "pct": "11.8"}], "pred_result": "away_win", "pred_home_pct": "13.5", "pred_draw_pct": "38.6", "pred_away_pct": "47.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.63, "sim_odds_source": "polymarket"}, {"round": "Group C", "home": "Scotland", "away": "Morocco", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "13.6"}, {"score": "1-1", "pct": "11.6"}, {"score": "0-1", "pct": "11.0"}], "pred_result": "away_win", "pred_home_pct": "7.8", "pred_draw_pct": "29.3", "pred_away_pct": "62.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.68, "sim_odds_source": "polymarket"}, {"round": "Group C", "home": "Brazil", "away": "Haiti", "actual_score": "3-0", "actual_result": "home_win", "top_scores": [{"score": "3-0", "pct": "16.3"}, {"score": "2-0", "pct": "14.6"}, {"score": "4-0", "pct": "13.6"}], "pred_result": "home_win", "pred_home_pct": "96.2", "pred_draw_pct": "3.3", "pred_away_pct": "0.6", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.13, "sim_odds_source": "polymarket"}, {"round": "Group C", "home": "Scotland", "away": "Brazil", "actual_score": "0-3", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "12.9"}, {"score": "0-2", "pct": "12.6"}, {"score": "0-0", "pct": "11.4"}], "pred_result": "away_win", "pred_home_pct": "9.4", "pred_draw_pct": "32.7", "pred_away_pct": "57.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.34, "sim_odds_source": "polymarket"}, {"round": "Group C", "home": "Morocco", "away": "Haiti", "actual_score": "4-2", "actual_result": "home_win", "top_scores": [{"score": "3-0", "pct": "16.2"}, {"score": "2-0", "pct": "14.2"}, {"score": "4-0", "pct": "13.9"}], "pred_result": "home_win", "pred_home_pct": "95.8", "pred_draw_pct": "3.6", "pred_away_pct": "0.6", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.23, "sim_odds_source": "polymarket"}, {"round": "Group D", "home": "United States", "away": "Paraguay", "actual_score": "4-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "16.7"}, {"score": "0-0", "pct": "14.7"}, {"score": "2-0", "pct": "8.1"}], "pred_result": "draw", "pred_home_pct": "40.5", "pred_draw_pct": "42.1", "pred_away_pct": "17.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.39, "sim_odds_source": "polymarket"}, {"round": "Group D", "home": "Australia", "away": "Turkey", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "16.2"}, {"score": "0-0", "pct": "14.3"}, {"score": "1-0", "pct": "10.4"}], "pred_result": "home_win", "pred_home_pct": "43.3", "pred_draw_pct": "40.9", "pred_away_pct": "15.8", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 5.71, "sim_odds_source": "polymarket"}, {"round": "Group D", "home": "United States", "away": "Australia", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "12.4"}, {"score": "2-1", "pct": "11.9"}, {"score": "2-0", "pct": "11.6"}], "pred_result": "home_win", "pred_home_pct": "59.9", "pred_draw_pct": "31.4", "pred_away_pct": "8.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.68, "sim_odds_source": "polymarket"}, {"round": "Group D", "home": "Turkey", "away": "Paraguay", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "14.6"}, {"score": "0-0", "pct": "12.9"}, {"score": "1-0", "pct": "12.4"}], "pred_result": "home_win", "pred_home_pct": "50.9", "pred_draw_pct": "37.0", "pred_away_pct": "12.1", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.06, "sim_odds_source": "polymarket"}, {"round": "Group D", "home": "Turkey", "away": "United States", "actual_score": "3-2", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "14.4"}, {"score": "2-1", "pct": "13.8"}, {"score": "0-0", "pct": "12.7"}], "pred_result": "home_win", "pred_home_pct": "52.0", "pred_draw_pct": "36.3", "pred_away_pct": "11.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.77, "sim_odds_source": "polymarket"}, {"round": "Group D", "home": "Paraguay", "away": "Australia", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.4"}, {"score": "0-0", "pct": "15.3"}, {"score": "0-1", "pct": "10.7"}], "pred_result": "draw", "pred_home_pct": "20.9", "pred_draw_pct": "44.0", "pred_away_pct": "35.1", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.47, "sim_odds_source": "polymarket"}, {"round": "Group E", "home": "Germany", "away": "Curaçao", "actual_score": "7-1", "actual_result": "home_win", "top_scores": [{"score": "3-0", "pct": "13.9"}, {"score": "4-0", "pct": "13.0"}, {"score": "2-0", "pct": "11.2"}], "pred_result": "home_win", "pred_home_pct": "94.2", "pred_draw_pct": "4.9", "pred_away_pct": "0.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.06, "sim_odds_source": "polymarket"}, {"round": "Group E", "home": "Ivory Coast", "away": "Ecuador", "actual_score": "1-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "16.9"}, {"score": "0-0", "pct": "14.9"}, {"score": "1-0", "pct": "11.3"}], "pred_result": "draw", "pred_home_pct": "38.8", "pred_draw_pct": "42.8", "pred_away_pct": "18.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.99, "sim_odds_source": "polymarket"}, {"round": "Group E", "home": "Germany", "away": "Ivory Coast", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "13.9"}, {"score": "0-0", "pct": "12.3"}, {"score": "2-0", "pct": "10.1"}], "pred_result": "home_win", "pred_home_pct": "53.9", "pred_draw_pct": "35.2", "pred_away_pct": "10.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.46, "sim_odds_source": "polymarket"}, {"round": "Group E", "home": "Ecuador", "away": "Curaçao", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "14.9"}, {"score": "1-0", "pct": "11.5"}, {"score": "3-0", "pct": "10.6"}], "pred_result": "home_win", "pred_home_pct": "69.9", "pred_draw_pct": "24.3", "pred_away_pct": "5.8", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.18, "sim_odds_source": "polymarket"}, {"round": "Group E", "home": "Curaçao", "away": "Ivory Coast", "actual_score": "0-2", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "15.9"}, {"score": "0-1", "pct": "13.5"}, {"score": "1-2", "pct": "11.9"}], "pred_result": "away_win", "pred_home_pct": "4.5", "pred_draw_pct": "20.2", "pred_away_pct": "75.3", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.21, "sim_odds_source": "polymarket"}, {"round": "Group E", "home": "Ecuador", "away": "Germany", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "13.9"}, {"score": "0-0", "pct": "12.3"}, {"score": "0-2", "pct": "10.8"}], "pred_result": "away_win", "pred_home_pct": "10.9", "pred_draw_pct": "35.2", "pred_away_pct": "53.8", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.64, "sim_odds_source": "polymarket"}, {"round": "Group F", "home": "Netherlands", "away": "Japan", "actual_score": "2-2", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "13.9"}, {"score": "0-0", "pct": "12.2"}, {"score": "2-1", "pct": "10.4"}], "pred_result": "home_win", "pred_home_pct": "54.1", "pred_draw_pct": "35.0", "pred_away_pct": "10.8", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.2, "sim_odds_source": "polymarket"}, {"round": "Group F", "home": "Sweden", "away": "Tunisia", "actual_score": "5-1", "actual_result": "home_win", "top_scores": [{"score": "2-1", "pct": "11.9"}, {"score": "2-0", "pct": "11.2"}, {"score": "1-1", "pct": "9.1"}], "pred_result": "home_win", "pred_home_pct": "71.6", "pred_draw_pct": "23.0", "pred_away_pct": "5.4", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.98, "sim_odds_source": "polymarket"}, {"round": "Group F", "home": "Netherlands", "away": "Sweden", "actual_score": "5-1", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "13.7"}, {"score": "3-0", "pct": "12.7"}, {"score": "2-1", "pct": "11.5"}], "pred_result": "home_win", "pred_home_pct": "96.7", "pred_draw_pct": "2.8", "pred_away_pct": "0.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.74, "sim_odds_source": "polymarket"}, {"round": "Group F", "home": "Tunisia", "away": "Japan", "actual_score": "0-4", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "11.8"}, {"score": "0-0", "pct": "10.4"}, {"score": "0-2", "pct": "10.1"}], "pred_result": "away_win", "pred_home_pct": "8.0", "pred_draw_pct": "29.7", "pred_away_pct": "62.3", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.44, "sim_odds_source": "polymarket"}, {"round": "Group F", "home": "Japan", "away": "Sweden", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.6"}, {"score": "0-0", "pct": "15.6"}, {"score": "1-2", "pct": "7.9"}], "pred_result": "draw", "pred_home_pct": "32.2", "pred_draw_pct": "44.6", "pred_away_pct": "23.2", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.56, "sim_odds_source": "polymarket"}, {"round": "Group F", "home": "Tunisia", "away": "Netherlands", "actual_score": "1-3", "actual_result": "away_win", "top_scores": [{"score": "0-3", "pct": "11.4"}, {"score": "0-2", "pct": "10.7"}, {"score": "0-4", "pct": "9.1"}], "pred_result": "away_win", "pred_home_pct": "2.8", "pred_draw_pct": "13.8", "pred_away_pct": "83.4", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.13, "sim_odds_source": "polymarket"}, {"round": "Group G", "home": "Belgium", "away": "Egypt", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "11.8"}, {"score": "1-1", "pct": "11.7"}, {"score": "0-0", "pct": "10.4"}], "pred_result": "home_win", "pred_home_pct": "62.3", "pred_draw_pct": "29.7", "pred_away_pct": "8.0", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.57, "sim_odds_source": "polymarket"}, {"round": "Group G", "home": "Iran", "away": "New Zealand", "actual_score": "2-2", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "13.9"}, {"score": "3-0", "pct": "12.2"}, {"score": "2-1", "pct": "8.8"}], "pred_result": "home_win", "pred_home_pct": "80.5", "pred_draw_pct": "16.2", "pred_away_pct": "3.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.87, "sim_odds_source": "polymarket"}, {"round": "Group G", "home": "Belgium", "away": "Iran", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "12.3"}, {"score": "1-1", "pct": "11.8"}, {"score": "2-1", "pct": "10.8"}], "pred_result": "home_win", "pred_home_pct": "62.2", "pred_draw_pct": "29.8", "pred_away_pct": "8.0", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.44, "sim_odds_source": "polymarket"}, {"round": "Group G", "home": "New Zealand", "away": "Egypt", "actual_score": "1-3", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "12.3"}, {"score": "1-1", "pct": "10.1"}, {"score": "1-2", "pct": "10.0"}], "pred_result": "away_win", "pred_home_pct": "6.3", "pred_draw_pct": "25.6", "pred_away_pct": "68.1", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.63, "sim_odds_source": "polymarket"}, {"round": "Group G", "home": "Egypt", "away": "Iran", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.4"}, {"score": "0-0", "pct": "15.3"}, {"score": "2-1", "pct": "8.5"}], "pred_result": "draw", "pred_home_pct": "35.4", "pred_draw_pct": "43.9", "pred_away_pct": "20.7", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.82, "sim_odds_source": "polymarket"}, {"round": "Group G", "home": "New Zealand", "away": "Belgium", "actual_score": "1-5", "actual_result": "away_win", "top_scores": [{"score": "0-3", "pct": "12.7"}, {"score": "0-4", "pct": "11.0"}, {"score": "0-2", "pct": "10.9"}], "pred_result": "away_win", "pred_home_pct": "1.9", "pred_draw_pct": "10.2", "pred_away_pct": "87.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.23, "sim_odds_source": "polymarket"}, {"round": "Group H", "home": "Spain", "away": "Cape Verde", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "19.6"}, {"score": "3-0", "pct": "16.5"}, {"score": "1-0", "pct": "13.9"}], "pred_result": "home_win", "pred_home_pct": "90.1", "pred_draw_pct": "8.4", "pred_away_pct": "1.6", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.08, "sim_odds_source": "polymarket"}, {"round": "Group H", "home": "Saudi Arabia", "away": "Uruguay", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "14.3"}, {"score": "0-0", "pct": "12.6"}, {"score": "0-2", "pct": "11.3"}], "pred_result": "away_win", "pred_home_pct": "11.5", "pred_draw_pct": "36.0", "pred_away_pct": "52.5", "pending": false, "result_correct": false, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.48, "sim_odds_source": "polymarket"}, {"round": "Group H", "home": "Spain", "away": "Saudi Arabia", "actual_score": "4-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "17.9"}, {"score": "3-0", "pct": "17.7"}, {"score": "4-0", "pct": "13.1"}], "pred_result": "home_win", "pred_home_pct": "95.4", "pred_draw_pct": "3.9", "pred_away_pct": "0.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.12, "sim_odds_source": "polymarket"}, {"round": "Group H", "home": "Uruguay", "away": "Cape Verde", "actual_score": "2-2", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "13.1"}, {"score": "1-1", "pct": "12.9"}, {"score": "1-0", "pct": "11.9"}], "pred_result": "home_win", "pred_home_pct": "57.9", "pred_draw_pct": "32.6", "pred_away_pct": "9.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.44, "sim_odds_source": "polymarket"}, {"round": "Group H", "home": "Cape Verde", "away": "Saudi Arabia", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "15.6"}, {"score": "0-0", "pct": "13.7"}, {"score": "1-0", "pct": "13.2"}], "pred_result": "home_win", "pred_home_pct": "46.5", "pred_draw_pct": "39.3", "pred_away_pct": "14.1", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.08, "sim_odds_source": "polymarket"}, {"round": "Group H", "home": "Uruguay", "away": "Spain", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "15.3"}, {"score": "0-1", "pct": "15.2"}, {"score": "1-2", "pct": "11.2"}], "pred_result": "away_win", "pred_home_pct": "6.5", "pred_draw_pct": "26.2", "pred_away_pct": "67.3", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.71, "sim_odds_source": "polymarket"}, {"round": "Group I", "home": "France", "away": "Senegal", "actual_score": "3-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "11.7"}, {"score": "2-0", "pct": "10.7"}, {"score": "2-1", "pct": "10.3"}], "pred_result": "home_win", "pred_home_pct": "62.5", "pred_draw_pct": "29.6", "pred_away_pct": "7.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.48, "sim_odds_source": "polymarket"}, {"round": "Group I", "home": "Iraq", "away": "Norway", "actual_score": "1-4", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "12.7"}, {"score": "1-2", "pct": "12.2"}, {"score": "0-3", "pct": "9.9"}], "pred_result": "away_win", "pred_home_pct": "3.1", "pred_draw_pct": "15.2", "pred_away_pct": "81.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.24, "sim_odds_source": "polymarket"}, {"round": "Group I", "home": "France", "away": "Iraq", "actual_score": "3-0", "actual_result": "home_win", "top_scores": [{"score": "3-0", "pct": "15.5"}, {"score": "4-0", "pct": "14.9"}, {"score": "2-0", "pct": "12.0"}], "pred_result": "home_win", "pred_home_pct": "97.0", "pred_draw_pct": "2.5", "pred_away_pct": "0.4", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.09, "sim_odds_source": "polymarket"}, {"round": "Group I", "home": "Norway", "away": "Senegal", "actual_score": "3-2", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "17.6"}, {"score": "0-0", "pct": "15.5"}, {"score": "2-1", "pct": "8.6"}], "pred_result": "draw", "pred_home_pct": "33.1", "pred_draw_pct": "44.5", "pred_away_pct": "22.5", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 3.51, "sim_odds_source": "polymarket"}, {"round": "Group I", "home": "Norway", "away": "France", "actual_score": "1-4", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "15.9"}, {"score": "1-2", "pct": "14.6"}, {"score": "0-3", "pct": "12.0"}], "pred_result": "away_win", "pred_home_pct": "0.5", "pred_draw_pct": "3.1", "pred_away_pct": "96.3", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.44, "sim_odds_source": "polymarket"}, {"round": "Group I", "home": "Senegal", "away": "Iraq", "actual_score": "5-0", "actual_result": "home_win", "top_scores": [{"score": "3-0", "pct": "13.0"}, {"score": "2-0", "pct": "11.9"}, {"score": "4-0", "pct": "10.7"}], "pred_result": "home_win", "pred_home_pct": "92.4", "pred_draw_pct": "6.4", "pred_away_pct": "1.2", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.26, "sim_odds_source": "polymarket"}, {"round": "Group J", "home": "Argentina", "away": "Algeria", "actual_score": "3-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "12.6"}, {"score": "3-0", "pct": "10.5"}, {"score": "1-1", "pct": "9.4"}], "pred_result": "home_win", "pred_home_pct": "70.5", "pred_draw_pct": "23.8", "pred_away_pct": "5.6", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.55, "sim_odds_source": "polymarket"}, {"round": "Group J", "home": "Austria", "away": "Jordan", "actual_score": "3-1", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "13.2"}, {"score": "2-1", "pct": "11.1"}, {"score": "3-0", "pct": "10.3"}], "pred_result": "home_win", "pred_home_pct": "78.5", "pred_draw_pct": "17.7", "pred_away_pct": "3.8", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.44, "sim_odds_source": "polymarket"}, {"round": "Group J", "home": "Argentina", "away": "Austria", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "12.1"}, {"score": "1-1", "pct": "10.3"}, {"score": "3-0", "pct": "9.5"}], "pred_result": "home_win", "pred_home_pct": "67.4", "pred_draw_pct": "26.1", "pred_away_pct": "6.5", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.48, "sim_odds_source": "polymarket"}, {"round": "Group J", "home": "Jordan", "away": "Algeria", "actual_score": "1-2", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "14.8"}, {"score": "0-0", "pct": "13.1"}, {"score": "1-2", "pct": "9.4"}], "pred_result": "away_win", "pred_home_pct": "12.6", "pred_draw_pct": "37.5", "pred_away_pct": "49.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.55, "sim_odds_source": "polymarket"}, {"round": "Group J", "home": "Algeria", "away": "Austria", "actual_score": "3-3", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.5"}, {"score": "0-0", "pct": "15.4"}, {"score": "1-2", "pct": "8.2"}], "pred_result": "draw", "pred_home_pct": "21.7", "pred_draw_pct": "44.2", "pred_away_pct": "34.1", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.15, "sim_odds_source": "polymarket"}, {"round": "Group J", "home": "Jordan", "away": "Argentina", "actual_score": "1-3", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "15.2"}, {"score": "0-3", "pct": "15.0"}, {"score": "0-4", "pct": "11.1"}], "pred_result": "away_win", "pred_home_pct": "1.3", "pred_draw_pct": "7.0", "pred_away_pct": "91.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.16, "sim_odds_source": "polymarket"}, {"round": "Group K", "home": "Portugal", "away": "DR Congo", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "15.4"}, {"score": "1-0", "pct": "11.8"}, {"score": "3-0", "pct": "11.3"}], "pred_result": "home_win", "pred_home_pct": "72.9", "pred_draw_pct": "22.1", "pred_away_pct": "5.1", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.31, "sim_odds_source": "polymarket"}, {"round": "Group K", "home": "Uzbekistan", "away": "Colombia", "actual_score": "1-3", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "15.2"}, {"score": "0-3", "pct": "11.8"}, {"score": "0-1", "pct": "10.6"}], "pred_result": "away_win", "pred_home_pct": "3.6", "pred_draw_pct": "17.2", "pred_away_pct": "79.2", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.4, "sim_odds_source": "polymarket"}, {"round": "Group K", "home": "Portugal", "away": "Uzbekistan", "actual_score": "5-0", "actual_result": "home_win", "top_scores": [{"score": "3-0", "pct": "15.3"}, {"score": "2-0", "pct": "13.9"}, {"score": "4-0", "pct": "12.5"}], "pred_result": "home_win", "pred_home_pct": "95.4", "pred_draw_pct": "3.9", "pred_away_pct": "0.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.17, "sim_odds_source": "polymarket"}, {"round": "Group K", "home": "Colombia", "away": "DR Congo", "actual_score": "1-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "14.9"}, {"score": "1-0", "pct": "13.6"}, {"score": "1-1", "pct": "11.0"}], "pred_result": "home_win", "pred_home_pct": "65.1", "pred_draw_pct": "27.8", "pred_away_pct": "7.1", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.57, "sim_odds_source": "polymarket"}, {"round": "Group K", "home": "Colombia", "away": "Portugal", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "17.8"}, {"score": "0-0", "pct": "15.7"}, {"score": "0-1", "pct": "8.2"}], "pred_result": "draw", "pred_home_pct": "25.5", "pred_draw_pct": "45.0", "pred_away_pct": "29.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "draw", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 4.26, "sim_odds_source": "polymarket"}, {"round": "Group K", "home": "DR Congo", "away": "Uzbekistan", "actual_score": "3-1", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "12.5"}, {"score": "2-1", "pct": "11.8"}, {"score": "1-1", "pct": "11.1"}], "pred_result": "home_win", "pred_home_pct": "64.8", "pred_draw_pct": "28.0", "pred_away_pct": "7.2", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.71, "sim_odds_source": "polymarket"}, {"round": "Group L", "home": "England", "away": "Croatia", "actual_score": "4-2", "actual_result": "home_win", "top_scores": [{"score": "2-1", "pct": "13.9"}, {"score": "2-0", "pct": "12.8"}, {"score": "1-0", "pct": "9.4"}], "pred_result": "home_win", "pred_home_pct": "74.2", "pred_draw_pct": "21.0", "pred_away_pct": "4.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.74, "sim_odds_source": "polymarket"}, {"round": "Group L", "home": "Ghana", "away": "Panama", "actual_score": "1-0", "actual_result": "home_win", "top_scores": [{"score": "1-0", "pct": "20.5"}, {"score": "1-1", "pct": "13.5"}, {"score": "2-0", "pct": "12.2"}], "pred_result": "home_win", "pred_home_pct": "55.5", "pred_draw_pct": "34.2", "pred_away_pct": "10.3", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 2.47, "sim_odds_source": "polymarket"}, {"round": "Group L", "home": "England", "away": "Ghana", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "15.5"}, {"score": "3-0", "pct": "13.9"}, {"score": "1-0", "pct": "10.0"}], "pred_result": "home_win", "pred_home_pct": "80.9", "pred_draw_pct": "15.8", "pred_away_pct": "3.3", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.2, "sim_odds_source": "polymarket"}, {"round": "Group L", "home": "Panama", "away": "Croatia", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "13.8"}, {"score": "0-1", "pct": "12.3"}, {"score": "1-1", "pct": "11.0"}], "pred_result": "away_win", "pred_home_pct": "7.2", "pred_draw_pct": "27.9", "pred_away_pct": "64.9", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.48, "sim_odds_source": "polymarket"}, {"round": "Group L", "home": "Panama", "away": "England", "actual_score": "0-2", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "14.4"}, {"score": "0-1", "pct": "11.0"}, {"score": "0-3", "pct": "10.3"}], "pred_result": "away_win", "pred_home_pct": "5.6", "pred_draw_pct": "23.8", "pred_away_pct": "70.5", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.17, "sim_odds_source": "polymarket"}, {"round": "Group L", "home": "Croatia", "away": "Ghana", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "14.9"}, {"score": "1-0", "pct": "11.5"}, {"score": "3-0", "pct": "10.8"}], "pred_result": "home_win", "pred_home_pct": "70.2", "pred_draw_pct": "24.1", "pred_away_pct": "5.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": false, "sim_won_override": null, "sim_odds": 1.83, "sim_odds_source": "polymarket"}, {"round": "Round of 32", "home": "South Africa", "away": "Canada", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "22.5"}, {"score": "0-1", "pct": "11.2"}, {"score": "0-2", "pct": "10.5"}], "pred_result": "away_win", "pred_home_pct": "13.6", "pred_draw_pct": "38.8", "pred_away_pct": "47.6", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.33, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Brazil", "away": "Japan", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "25.9"}, {"score": "2-2", "pct": "9.4"}, {"score": "0-0", "pct": "7.1"}], "pred_result": "draw", "pred_home_pct": "32.0", "pred_draw_pct": "44.7", "pred_away_pct": "23.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.33, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Germany", "away": "Paraguay", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "22.8"}, {"score": "2-0", "pct": "9.2"}, {"score": "2-2", "pct": "8.3"}], "pred_result": "home_win", "pred_home_pct": "46.5", "pred_draw_pct": "39.4", "pred_away_pct": "14.2", "pending": false, "result_correct": false, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": false, "sim_odds": 1.12, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Netherlands", "away": "Morocco", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "25.4"}, {"score": "2-2", "pct": "9.2"}, {"score": "1-2", "pct": "9.0"}], "pred_result": "draw", "pred_home_pct": "20.8", "pred_draw_pct": "43.9", "pred_away_pct": "35.2", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 2.42, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Ivory Coast", "away": "Norway", "actual_score": "1-2", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "22.3"}, {"score": "1-2", "pct": "11.4"}, {"score": "0-2", "pct": "8.7"}], "pred_result": "away_win", "pred_home_pct": "13.3", "pred_draw_pct": "38.5", "pred_away_pct": "48.2", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.6, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "France", "away": "Sweden", "actual_score": "3-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "15.2"}, {"score": "3-0", "pct": "14.8"}, {"score": "4-0", "pct": "10.9"}], "pred_result": "home_win", "pred_home_pct": "98.6", "pred_draw_pct": "1.2", "pred_away_pct": "0.2", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.1, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Mexico", "away": "Ecuador", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "25.9"}, {"score": "2-2", "pct": "9.4"}, {"score": "1-2", "pct": "7.3"}], "pred_result": "draw", "pred_home_pct": "31.9", "pred_draw_pct": "44.7", "pred_away_pct": "23.4", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.54, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "England", "away": "DR Congo", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "17.9"}, {"score": "2-0", "pct": "10.9"}, {"score": "3-0", "pct": "9.2"}], "pred_result": "home_win", "pred_home_pct": "60.6", "pred_draw_pct": "30.9", "pred_away_pct": "8.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.07, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Belgium", "away": "Senegal", "actual_score": "2-2", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "26.1"}, {"score": "2-2", "pct": "9.5"}, {"score": "1-2", "pct": "7.3"}], "pred_result": "draw", "pred_home_pct": "29.3", "pred_draw_pct": "45.0", "pred_away_pct": "25.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.56, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "United States", "away": "Bosnia and Herzegovina", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "20.9"}, {"score": "2-0", "pct": "8.0"}, {"score": "2-2", "pct": "7.6"}], "pred_result": "home_win", "pred_home_pct": "52.5", "pred_draw_pct": "36.1", "pred_away_pct": "11.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.13, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Spain", "away": "Austria", "actual_score": "3-0", "actual_result": "home_win", "top_scores": [{"score": "2-0", "pct": "18.7"}, {"score": "3-0", "pct": "14.3"}, {"score": "1-0", "pct": "13.4"}], "pred_result": "home_win", "pred_home_pct": "94.7", "pred_draw_pct": "4.5", "pred_away_pct": "0.8", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.1, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Portugal", "away": "Croatia", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "22.5"}, {"score": "2-0", "pct": "9.5"}, {"score": "2-1", "pct": "9.2"}], "pred_result": "home_win", "pred_home_pct": "47.4", "pred_draw_pct": "38.9", "pred_away_pct": "13.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.28, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Switzerland", "away": "Algeria", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "24.7"}, {"score": "2-2", "pct": "9.0"}, {"score": "2-0", "pct": "7.3"}], "pred_result": "draw", "pred_home_pct": "39.2", "pred_draw_pct": "42.6", "pred_away_pct": "18.2", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.43, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Australia", "away": "Egypt", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "25.3"}, {"score": "0-1", "pct": "9.4"}, {"score": "2-2", "pct": "9.2"}], "pred_result": "draw", "pred_home_pct": "20.1", "pred_draw_pct": "43.6", "pred_away_pct": "36.2", "pending": false, "result_correct": true, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.65, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Argentina", "away": "Cape Verde", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "14.5"}, {"score": "1-1", "pct": "13.6"}, {"score": "3-0", "pct": "12.4"}], "pred_result": "home_win", "pred_home_pct": "70.9", "pred_draw_pct": "23.6", "pred_away_pct": "5.6", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.04, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 32", "home": "Colombia", "away": "Ghana", "actual_score": "1-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "19.5"}, {"score": "2-0", "pct": "13.8"}, {"score": "1-0", "pct": "12.7"}], "pred_result": "home_win", "pred_home_pct": "56.4", "pred_draw_pct": "33.6", "pred_away_pct": "10.0", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.15, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Canada", "away": "Morocco", "actual_score": "0-3", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "14.7"}, {"score": "1-2", "pct": "12.8"}, {"score": "1-1", "pct": "12.1"}], "pred_result": "away_win", "pred_home_pct": "4.7", "pred_draw_pct": "20.8", "pred_away_pct": "74.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.32, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Paraguay", "away": "France", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "0-2", "pct": "19.1"}, {"score": "0-1", "pct": "15.4"}, {"score": "0-3", "pct": "13.2"}], "pred_result": "away_win", "pred_home_pct": "2.2", "pred_draw_pct": "11.2", "pred_away_pct": "86.6", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.05, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Brazil", "away": "Norway", "actual_score": "1-2", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "23.8"}, {"score": "2-2", "pct": "8.7"}, {"score": "2-0", "pct": "7.1"}], "pred_result": "home_win", "pred_home_pct": "42.8", "pred_draw_pct": "41.1", "pred_away_pct": "16.1", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": false, "sim_odds": 1.36, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Mexico", "away": "England", "actual_score": "2-3", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "18.7"}, {"score": "1-2", "pct": "13.8"}, {"score": "0-2", "pct": "10.9"}], "pred_result": "away_win", "pred_home_pct": "9.3", "pred_draw_pct": "32.4", "pred_away_pct": "58.4", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.84, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Portugal", "away": "Spain", "actual_score": "0-1", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "19.2"}, {"score": "0-1", "pct": "16.5"}, {"score": "0-2", "pct": "12.7"}], "pred_result": "away_win", "pred_home_pct": "9.7", "pred_draw_pct": "33.2", "pred_away_pct": "57.1", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.47, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "United States", "away": "Belgium", "actual_score": "1-4", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "19.2"}, {"score": "1-2", "pct": "12.1"}, {"score": "0-2", "pct": "9.1"}], "pred_result": "away_win", "pred_home_pct": "9.7", "pred_draw_pct": "33.2", "pred_away_pct": "57.0", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 2.06, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Argentina", "away": "Egypt", "actual_score": "3-2", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "17.0"}, {"score": "2-0", "pct": "12.9"}, {"score": "1-0", "pct": "10.0"}], "pred_result": "home_win", "pred_home_pct": "62.8", "pred_draw_pct": "29.4", "pred_away_pct": "7.8", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.1, "sim_odds_source": "polymarket_advance"}, {"round": "Round of 16", "home": "Switzerland", "away": "Colombia", "actual_score": "0-0", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "25.8"}, {"score": "2-2", "pct": "9.4"}, {"score": "0-1", "pct": "8.1"}], "pred_result": "draw", "pred_home_pct": "22.8", "pred_draw_pct": "44.5", "pred_away_pct": "32.7", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "away_win", "sim_is_knockout": true, "sim_won_override": false, "sim_odds": 1.64, "sim_odds_source": "polymarket_advance"}, {"round": "Quarter-final", "home": "France", "away": "Morocco", "actual_score": "2-0", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "15.4"}, {"score": "2-0", "pct": "12.8"}, {"score": "2-1", "pct": "12.0"}], "pred_result": "home_win", "pred_home_pct": "60.9", "pred_draw_pct": "26.7", "pred_away_pct": "12.4", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 5.33, "sim_odds_source": "polymarket_advance"}, {"round": "Quarter-final", "home": "Spain", "away": "Belgium", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "15.2"}, {"score": "2-0", "pct": "12.7"}, {"score": "1-0", "pct": "12.5"}], "pred_result": "home_win", "pred_home_pct": "60.4", "pred_draw_pct": "26.1", "pred_away_pct": "13.5", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.27, "sim_odds_source": "polymarket_advance"}, {"round": "Quarter-final", "home": "England", "away": "Norway", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "2-0", "pct": "12.5"}, {"score": "2-1", "pct": "12.1"}, {"score": "3-0", "pct": "9.6"}], "pred_result": "home_win", "pred_home_pct": "79.1", "pred_draw_pct": "15.3", "pred_away_pct": "5.6", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 3.29, "sim_odds_source": "polymarket_advance"}, {"round": "Quarter-final", "home": "Argentina", "away": "Switzerland", "actual_score": "1-1", "actual_result": "draw", "top_scores": [{"score": "1-1", "pct": "15.2"}, {"score": "2-0", "pct": "12.4"}, {"score": "2-1", "pct": "10.6"}], "pred_result": "home_win", "pred_home_pct": "61.4", "pred_draw_pct": "26.2", "pred_away_pct": "12.4", "pending": false, "result_correct": false, "score_correct_top1": true, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": 1.27, "sim_odds_source": "polymarket_advance"}, {"round": "Semi-final", "home": "France", "away": "Spain", "actual_score": "0-2", "actual_result": "away_win", "top_scores": [{"score": "1-1", "pct": "20.0"}, {"score": "1-0", "pct": "9.6"}, {"score": "2-0", "pct": "8.7"}], "pred_result": "home_win", "pred_home_pct": "37.5", "pred_draw_pct": "35.0", "pred_away_pct": "27.5", "pending": false, "result_correct": false, "score_correct_top1": false, "score_correct_top3": false, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": false, "sim_odds": null, "sim_odds_source": "unavailable"}, {"round": "Semi-final", "home": "Argentina", "away": "England", "actual_score": "2-1", "actual_result": "home_win", "top_scores": [{"score": "1-1", "pct": "19.7"}, {"score": "2-1", "pct": "9.0"}, {"score": "2-2", "pct": "7.6"}], "pred_result": "home_win", "pred_home_pct": "39.2", "pred_draw_pct": "34.4", "pred_away_pct": "26.3", "pending": false, "result_correct": true, "score_correct_top1": false, "score_correct_top3": true, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": true, "sim_odds": null, "sim_odds_source": "unavailable"}, {"round": "Third-place play-off", "home": "France", "away": "England", "actual_score": null, "actual_result": null, "top_scores": [{"score": "1-1", "pct": "11.5"}, {"score": "0-0", "pct": "10.6"}, {"score": "2-0", "pct": "10.4"}], "pred_result": "home_win", "pred_home_pct": "51.7", "pred_draw_pct": "30.0", "pred_away_pct": "18.3", "pending": true, "result_correct": null, "score_correct_top1": null, "score_correct_top3": null, "market_odds": null, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": null, "sim_odds": null, "sim_odds_source": "unavailable"}, {"round": "Final", "home": "Spain", "away": "Argentina", "actual_score": null, "actual_result": null, "top_scores": [{"score": "1-1", "pct": "17.8"}, {"score": "1-0", "pct": "11.8"}, {"score": "2-0", "pct": "11.6"}], "pred_result": "home_win", "pred_home_pct": "51.5", "pred_draw_pct": "30.6", "pred_away_pct": "17.8", "pending": true, "result_correct": null, "score_correct_top1": null, "score_correct_top3": null, "market_odds": null, "sim_pick": "home_win", "sim_is_knockout": true, "sim_won_override": null, "sim_odds": null, "sim_odds_source": "unavailable"}];
-const CHAMPION = {"champion_probs": {"Spain": 0.6247509090426973, "Argentina": 0.37524909095730274}, "elo_top10": [{"team": "Spain", "elo": 1958.4}, {"team": "Argentina", "elo": 1946.0}, {"team": "France", "elo": 1900.6}, {"team": "England", "elo": 1845.7}]};
-const RESULT_LABEL = {"home_win": "主胜", "draw": "平局", "away_win": "客胜"};
+  (function () {
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-const RESULT_LABEL_SIM = {"home_win": "主胜", "draw": "平局", "away_win": "客胜"};
-let simStakes = DATA.map(() => 10);
+    var form = document.getElementById('gate-form');
+    var row = document.getElementById('field-row');
+    var input = document.getElementById('pw');
+    var feedback = document.getElementById('pw-feedback');
 
-function computeSimulation() {
-  const bankStart = parseFloat(document.getElementById("simBankroll").value) || 0;
-  let bank = bankStart;
-  let totalStaked = 0, totalProfit = 0, betsPlaced = 0, betsWon = 0;
-  const rows = [];
-  const SOURCE_TAG = {
-    polymarket: "Polymarket", odds_api: "博彩公司", unavailable: "无数据",
-    polymarket_advance: "Polymarket(晋级)", odds_api_advance: "博彩公司(晋级)",
-  };
-  DATA.forEach((r, i) => {
-    const stake = simStakes[i] || 0;
-    const label = `${r.home} vs ${r.away}` + (r.sim_is_knockout ? " (押晋级)" : "");
-    const oddsTag = SOURCE_TAG[r.sim_odds_source] || r.sim_odds_source;
-    if (r.sim_odds === null) {
-      rows.push({ label, pick: r.sim_pick, odds: "—", oddsTag, stake: 0, i,
-                  status: "无赔率数据", pl: null, bankAfter: null, noOdds: true });
-      return;
-    }
-    if (r.pending) {
-      rows.push({ label, pick: r.sim_pick, odds: r.sim_odds, oddsTag, stake, i,
-                  status: "待开赛", pl: null, bankAfter: null });
-      return;
-    }
-    const won = r.sim_is_knockout ? r.sim_won_override : (r.pred_result === r.actual_result);
-    const pl = won ? stake * (r.sim_odds - 1) : -stake;
-    bank += pl;
-    totalStaked += stake;
-    totalProfit += pl;
-    betsPlaced += 1;
-    if (won) betsWon += 1;
-    rows.push({ label, pick: r.sim_pick, odds: r.sim_odds, oddsTag, stake, i,
-                status: won ? "命中" : "未命中", pl, bankAfter: bank });
-  });
-  return { rows, bankStart, bankEnd: bank, totalStaked, totalProfit, betsPlaced, betsWon };
-}
-
-function renderSimulator() {
-  const sim = computeSimulation();
-  const roi = sim.totalStaked > 0 ? (100 * sim.totalProfit / sim.totalStaked) : 0;
-  const profitClass = sim.totalProfit > 0 ? "profit-pos" : (sim.totalProfit < 0 ? "profit-neg" : "");
-  document.getElementById("simSummary").innerHTML = `
-    <div class="stat-card"><div class="num">${sim.betsPlaced}</div><div class="label">已结算场次</div></div>
-    <div class="stat-card"><div class="num">${sim.betsWon}/${sim.betsPlaced}</div><div class="label">命中场次</div></div>
-    <div class="stat-card"><div class="num">${sim.totalStaked.toFixed(0)}</div><div class="label">累计下注本金</div></div>
-    <div class="stat-card"><div class="num ${profitClass}">${sim.totalProfit >= 0 ? "+" : ""}${sim.totalProfit.toFixed(1)}</div><div class="label">累计盈亏</div></div>
-    <div class="stat-card"><div class="num ${profitClass}">${roi >= 0 ? "+" : ""}${roi.toFixed(1)}%</div><div class="label">投资回报率ROI</div></div>
-    <div class="stat-card"><div class="num">${sim.bankEnd.toFixed(1)}</div><div class="label">当前余额(本金${sim.bankStart}起)</div></div>
-  `;
-  document.getElementById("simTableBody").innerHTML = sim.rows.map(row => {
-    const plHTML = row.pl === null ? "—" : `<span class="${row.pl >= 0 ? 'pl-pos' : 'pl-neg'}">${row.pl >= 0 ? "+" : ""}${row.pl.toFixed(1)}</span>`;
-    const bankHTML = row.bankAfter === null ? "—" : row.bankAfter.toFixed(1);
-    const stakeCell = row.noOdds
-      ? "—"
-      : `<input type="number" class="sim-stake-input" data-idx="${row.i}" value="${row.stake}" step="1" min="0">`;
-    return `
-      <tr>
-        <td>${row.label}</td>
-        <td>${RESULT_LABEL_SIM[row.pick]}</td>
-        <td>${row.odds}<span class="odds-tag">${row.oddsTag}</span></td>
-        <td>${stakeCell}</td>
-        <td>${row.status}</td>
-        <td>${plHTML}</td>
-        <td>${bankHTML}</td>
-      </tr>
-    `;
-  }).join("");
-  document.querySelectorAll(".sim-stake-input").forEach(inp => {
-    inp.addEventListener("input", () => {
-      simStakes[parseInt(inp.dataset.idx)] = parseFloat(inp.value) || 0;
-      renderSimulator();
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      row.classList.remove('shake');
+      void row.offsetWidth;
+      row.classList.add('shake');
+      feedback.textContent = 'Not open yet — the site is still updating.';
+      feedback.classList.add('is-visible');
+      input.focus();
     });
-  });
-}
 
-document.getElementById("simBankroll").addEventListener("input", renderSimulator);
-document.getElementById("simApplyAll").addEventListener("click", () => {
-  const v = parseFloat(document.getElementById("simDefaultStake").value) || 0;
-  simStakes = DATA.map(() => v);
-  renderSimulator();
-});
-document.getElementById("simReset").addEventListener("click", () => {
-  document.getElementById("simBankroll").value = 1000;
-  document.getElementById("simDefaultStake").value = 10;
-  simStakes = DATA.map(() => 10);
-  renderSimulator();
-});
-
-function renderChampion() {
-  const top10 = Object.entries(CHAMPION.champion_probs).slice(0, 10);
-  document.getElementById("championTop5").innerHTML = top10.map(([team, p]) => `
-    <li><span class="team-name">${team}</span><span class="team-val">${(p*100).toFixed(1)}%</span></li>
-  `).join("");
-  document.getElementById("eloTop5").innerHTML = CHAMPION.elo_top10.map(e => `
-    <li><span class="team-name">${e.team}</span><span class="team-val">${e.elo.toFixed(0)}</span></li>
-  `).join("");
-}
-
-const ROUND_GROUPS = [
-  {key: "group", label: "小组赛", rounds: ["Group A","Group B","Group C","Group D","Group E","Group F","Group G","Group H","Group I","Group J","Group K","Group L"]},
-  {key: "r32", label: "32强", rounds: ["Round of 32"]},
-  {key: "r16", label: "16强", rounds: ["Round of 16"]},
-  {key: "qf", label: "8强", rounds: ["Quarter-final"]},
-  {key: "sf", label: "4强", rounds: ["Semi-final"]},
-  {key: "final", label: "决赛", rounds: ["Third-place play-off","Final"]},
-];
-
-let currentFilter = "all";
-
-function computeStats(rows) {
-  const played = rows.filter(r => !r.pending);
-  const resultHits = played.filter(r => r.result_correct).length;
-  const top1Hits = played.filter(r => r.score_correct_top1).length;
-  const top3Hits = played.filter(r => r.score_correct_top3).length;
-  const pendingCount = rows.filter(r => r.pending).length;
-  return { total: rows.length, played: played.length, resultHits, top1Hits, top3Hits, pendingCount };
-}
-
-function renderStats() {
-  const s = computeStats(DATA);
-  const box = document.getElementById("stats");
-  const items = [
-    ["总场次", s.total],
-    ["已完赛", s.played],
-    ["胜平负命中", s.played ? `${s.resultHits}/${s.played} (${(100*s.resultHits/s.played).toFixed(1)}%)` : "-"],
-    ["比分Top1命中", s.played ? `${s.top1Hits}/${s.played} (${(100*s.top1Hits/s.played).toFixed(1)}%)` : "-"],
-    ["比分Top3命中", s.played ? `${s.top3Hits}/${s.played} (${(100*s.top3Hits/s.played).toFixed(1)}%)` : "-"],
-    ["待预测", s.pendingCount],
-  ];
-  box.innerHTML = items.map(([label, num]) => `
-    <div class="stat-card"><div class="num">${num}</div><div class="label">${label}</div></div>
-  `).join("");
-}
-
-function renderControls() {
-  const box = document.getElementById("controls");
-  const all = [{key:"all", label:"全部"}, ...ROUND_GROUPS.map(g => ({key:g.key, label:g.label}))];
-  box.innerHTML = all.map(g => `<button data-key="${g.key}" class="${g.key===currentFilter?'active':''}">${g.label}</button>`).join("");
-  box.querySelectorAll("button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      currentFilter = btn.dataset.key;
-      renderControls();
-      renderContent();
+    input.addEventListener('input', function () {
+      feedback.classList.remove('is-visible');
+      feedback.textContent = '';
     });
-  });
-}
-
-function matchRowHTML(r) {
-  const resultBoxClass = r.pending ? "pending" : (r.result_correct ? "correct" : "wrong");
-  const actualBoxClass = r.pending ? "pending" : "actual";
-  const actualScore = r.pending ? "—" : r.actual_score;
-  const actualResultLabel = r.pending ? '<span class="pending-badge">待开赛</span>' : RESULT_LABEL[r.actual_result];
-  const scoreChips = r.top_scores.map(t => {
-    const hit = !r.pending && t.score === r.actual_score;
-    return `<span class="chip ${hit ? 'hit' : ''}">${t.score}<span class="pct">${t.pct}%</span></span>`;
-  }).join("");
-  let marketHTML = "";
-  if (r.pending && r.market_odds) {
-    const m = r.market_odds;
-    const srcLabel = m.source === "polymarket" ? "Polymarket实时报价" : "The Odds API(欧洲博彩公司去水共识)";
-    const edge = (parseFloat(r.pred_home_pct) - m.home_pct).toFixed(1);
-    const edgeClass = edge > 3 ? "edge-pos" : (edge < -3 ? "edge-neg" : "");
-    marketHTML = `<div class="market-row">市场(${srcLabel}): 主${m.home_pct}% / 平${m.draw_pct}% / 客${m.away_pct}%
-      &nbsp;|&nbsp; 主胜分歧 <span class="${edgeClass}">${edge > 0 ? "+" : ""}${edge}pt</span></div>`;
-  }
-  return `
-    <tr class="match-row">
-      <td class="teams">${r.home} <span style="color:#aab;">vs</span> ${r.away}</td>
-      <td><span class="box ${actualBoxClass}">${actualScore}</span></td>
-      <td><span class="box ${actualBoxClass}">${actualResultLabel}</span></td>
-      <td><div class="score-chips">${scoreChips}</div></td>
-      <td><span class="box ${resultBoxClass}">${RESULT_LABEL[r.pred_result]}</span></td>
-      <td class="probs">主${r.pred_home_pct}% / 平${r.pred_draw_pct}% / 客${r.pred_away_pct}%${marketHTML}</td>
-    </tr>
-  `;
-}
-
-function renderContent() {
-  const el = document.getElementById("content");
-  const groups = currentFilter === "all" ? ROUND_GROUPS : ROUND_GROUPS.filter(g => g.key === currentFilter);
-  let out = "";
-  for (const g of groups) {
-    const rows = DATA.filter(r => g.rounds.includes(r.round));
-    if (rows.length === 0) continue;
-    out += `<div class="round-group">
-      <div class="round-title">${g.label} (${rows.length}场)</div>
-      <table>
-        <thead><tr>
-          <th>对阵</th><th>真实比分</th><th>真实结果</th><th>预测比分(Top3)</th><th>预测结果</th><th>预测概率</th>
-        </tr></thead>
-        <tbody>${rows.map(matchRowHTML).join("")}</tbody>
-      </table>
-    </div>`;
-  }
-  el.innerHTML = out;
-}
-
-renderChampion();
-renderSimulator();
-renderStats();
-renderControls();
-renderContent();
+  })();
 </script>
 
 </body>
